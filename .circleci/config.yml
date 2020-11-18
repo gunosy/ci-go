@@ -1,0 +1,31 @@
+version: 2.1
+executors:
+  docker:
+    working_directory: ~/workspace
+    docker:
+      - image: docker:18.03-git
+jobs:
+  build_and_push:
+    executor: docker
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Login to dockerhub
+          command: docker login -u "$DOCKER_HUB_USER" -p "$DOCKER_HUB_PASSWORD"
+      - run:
+          name: Build and push docker image
+          command: |
+            for tag in $( find . -follow -name Dockerfile | sed "s/^.\/\(.*\)\/Dockerfile/\1/g" ); do
+              docker build -f ${tag}/Dockerfile . -t gunosy/ci-go:${tag}
+              docker push gunosy/ci-go:${tag}
+            done
+workflows:
+  build:
+    jobs:
+      - build_and_push:
+          context: gunosy-dockerhub-user
+          filters:
+            branches:
+              only: master
+
