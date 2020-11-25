@@ -17,6 +17,10 @@ RUN sed -e 's/deb /deb \[trusted=yes\] /g' -i /etc/apt/sources.list \
   && rm -rf git-*
 
 RUN curl https://glide.sh/get | sh
-RUN go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
+RUN wget https://github.com/golangci/golangci-lint/archive/${GOLANGCI_LINT_VERSION}.zip -O golangci-lint.zip \
+ && unzip golangci-lint.zip \
+ && cd golangci-lint-* \
+ && make build \
+ && cp ./golangci-lint /go/bin/. 
 RUN go get -u github.com/alecthomas/gometalinter
 RUN gometalinter --install
