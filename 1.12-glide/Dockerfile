@@ -22,6 +22,5 @@ RUN wget https://github.com/golangci/golangci-lint/archive/${GOLANGCI_LINT_VERSI
  && cd golangci-lint-* \
  && make build \
  && cp ./golangci-lint /go/bin/. 
-
 RUN go get -u github.com/alecthomas/gometalinter
 RUN gometalinter --install
