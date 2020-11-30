@@ -4,28 +4,67 @@ executors:
     working_directory: ~/workspace
     docker:
       - image: docker:18.03-git
+
+commands:
+  login:
+    steps:
+      - run:
+          name: Login to Docker Hub
+          command: docker login -u "$DOCKER_HUB_USER" -p "$DOCKER_HUB_PASSWORD"
+  prepare_check_no_diff:
+    steps:
+      - run :
+          name: chmod
+          command: | 
+            chmod +x ./.circleci/check-no-diff.sh
+            apk add bash
+  build:
+    steps:
+      - run:
+          name: Build Docker image
+          command: |
+            for tag in $( find . -follow -name Dockerfile | sed "s/^.\/\(.*\)\/Dockerfile/\1/g" ); do
+              ./.circleci/check-no-diff.sh ${tag} || (
+                docker build -f ${tag}/Dockerfile . -t gunosy/ci-go:${tag}
+              )
+            done
+  build_and_push:
+    steps:
+      - run:
+          name: Build and Push Docker image
+          command: |
+            for tag in $( find . -follow -name Dockerfile | sed "s/^.\/\(.*\)\/Dockerfile/\1/g" ); do
+              ./.circleci/check-no-diff.sh ${tag} || (  
+                docker build -f ${tag}/Dockerfile . -t gunosy/ci-go:${tag}
+                docker push gunosy/ci-go:${tag}
+              )
+            done
 jobs:
+  build:
+    executor: docker
+    steps:
+      - checkout
+      - setup_remote_docker
+      - prepare_check_no_diff
+      - build
   build_and_push:
     executor: docker
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          name: Login to dockerhub
-          command: docker login -u "$DOCKER_HUB_USER" -p "$DOCKER_HUB_PASSWORD"
-      - run:
-          name: Build and push docker image
-          command: |
-            for tag in $( find . -follow -name Dockerfile | sed "s/^.\/\(.*\)\/Dockerfile/\1/g" ); do
-              docker build -f ${tag}/Dockerfile . -t gunosy/ci-go:${tag}
-              docker push gunosy/ci-go:${tag}
-            done
+      - login
+      - prepare_check_no_diff
+      - build_and_push
+
 workflows:
   build:
     jobs:
+      - build:
+          filters:
+            branches:
+              ignore: master
       - build_and_push:
           context: gunosy-dockerhub-user
           filters:
             branches:
               only: master
-
