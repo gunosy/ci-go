@@ -1,6 +1,6 @@
 FROM golang:1.17
 
-ENV GIT_VERSION=v2.34.1
+ENV GIT_VERSION=v2.33.1
 ENV GOLANGCI_LINT_VERSION=v1.43.0
 
 # Install not vulnerable git
