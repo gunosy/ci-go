@@ -1,4 +1,4 @@
-FROM golang:1.11
+FROM golang:1.20.9
 
 ENV GIT_VERSION=v2.26.1
 
